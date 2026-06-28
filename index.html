@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>模型训练营</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg: #0f172a;
+      --bg-light: #1e293b;
+      --bg-card: #334155;
+      --text: #f8fafc;
+      --text-dim: #94a3b8;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    #app {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Screen base */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      padding-top: max(24px, env(safe-area-inset-top));
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      overflow-y: auto;
+    }
+
+    .screen.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    /* Start Screen */
+    #screen-start {
+      text-align: center;
+    }
+
+    .logo-area {
+      margin-bottom: 40px;
+    }
+
+    .logo-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 16px;
+      background: linear-gradient(135deg, var(--primary), var(--success));
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+    }
+
+    .title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--text), var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      min-width: 160px;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+    }
+
+    .high-score {
+      margin-top: 32px;
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+
+    .high-score span {
+      color: var(--warning);
+      font-weight: 600;
+    }
+
+    /* Config Screen */
+    #screen-config {
+      justify-content: flex-start;
+      padding-top: 32px;
+    }
+
+    .config-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .config-section {
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 24px;
+    }
+
+    .config-label {
+      font-size: 13px;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .config-options {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .config-option {
+      flex: 1;
+      min-width: 90px;
+      padding: 12px 8px;
+      background: var(--bg-light);
+      border: 2px solid transparent;
+      border-radius: 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .config-option:active {
+      transform: scale(0.96);
+    }
+
+    .config-option.selected {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.15);
+    }
+
+    .config-option-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .config-option-label {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .start-training-btn {
+      margin-top: 16px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    /* Training Screen */
+    #screen-training {
+      justify-content: flex-start;
+      padding: 20px;
+      padding-top: max(20px, env(safe-area-inset-top));
+    }
+
+    .training-header {
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .training-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .training-epoch {
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+
+    .nn-viz {
+      width: 100%;
+      max-width: 400px;
+      height: 200px;
+      background: var(--bg-light);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .canvas-nn {
+      width: 100%;
+      height: 100%;
+    }
+
+    .metrics-area {
+      width: 100%;
+      max-width: 400px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .metric-card {
+      background: var(--bg-light);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .metric-value.loss {
+      color: var(--danger);
+    }
+
+    .metric-value.accuracy {
+      color: var(--success);
+    }
+
+    .progress-container {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--bg-light);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--success));
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 8px;
+    }
+
+    /* Result Screen */
+    #screen-result {
+      text-align: center;
+    }
+
+    .result-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .result-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .result-score {
+      font-size: 48px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--warning), var(--danger));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .result-grade {
+      font-size: 18px;
+      padding: 6px 16px;
+      background: var(--bg-light);
+      border-radius: 20px;
+      display: inline-block;
+      margin-bottom: 24px;
+    }
+
+    .result-stats {
+      width: 100%;
+      max-width: 300px;
+      background: var(--bg-light);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--bg-card);
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-label {
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    .stat-value {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* Animations */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .training .nn-viz::after {
+      content: '训练中...';
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 11px;
+      color: var(--warning);
+      animation: pulse 1s infinite;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Start Screen -->
+    <div id="screen-start" class="screen active">
+      <div class="logo-area">
+        <div class="logo-icon">🧠</div>
+        <h1 class="title">模型训练营</h1>
+        <p class="subtitle">配置参数，体验 AI 训练之旅</p>
+      </div>
+      <button class="btn" id="btn-start">开始训练</button>
+      <div class="high-score" id="high-score-display" style="display:none">
+        最高分: <span id="high-score-value">0</span>
+      </div>
+    </div>
+
+    <!-- Config Screen -->
+    <div id="screen-config" class="screen">
+      <h2 class="config-title">配置训练参数</h2>
+
+      <div class="config-section">
+        <div class="config-label">学习率</div>
+        <div class="config-options" id="options-lr">
+          <div class="config-option" data-value="0.001">
+            <div class="config-option-value">0.001</div>
+            <div class="config-option-label">保守</div>
+          </div>
+          <div class="config-option selected" data-value="0.01">
+            <div class="config-option-value">0.01</div>
+            <div class="config-option-label">均衡</div>
+          </div>
+          <div class="config-option" data-value="0.1">
+            <div class="config-option-value">0.1</div>
+            <div class="config-option-label">激进</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <div class="config-label">批次大小</div>
+        <div class="config-options" id="options-batch">
+          <div class="config-option" data-value="32">
+            <div class="config-option-value">32</div>
+            <div class="config-option-label">小批次</div>
+          </div>
+          <div class="config-option selected" data-value="64">
+            <div class="config-option-value">64</div>
+            <div class="config-option-label">标准</div>
+          </div>
+          <div class="config-option" data-value="128">
+            <div class="config-option-value">128</div>
+            <div class="config-option-label">大批次</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <div class="config-label">训练轮数</div>
+        <div class="config-options" id="options-epoch">
+          <div class="config-option" data-value="10">
+            <div class="config-option-value">10</div>
+            <div class="config-option-label">快速</div>
+          </div>
+          <div class="config-option selected" data-value="20">
+            <div class="config-option-value">20</div>
+            <div class="config-option-label">标准</div>
+          </div>
+          <div class="config-option" data-value="50">
+            <div class="config-option-value">50</div>
+            <div class="config-option-label">深度</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn start-training-btn" id="btn-train">启动训练</button>
+    </div>
+
+    <!-- Training Screen -->
+    <div id="screen-training" class="screen">
+      <div class="training-header">
+        <div class="training-title">模型训练中</div>
+        <div class="training-epoch" id="epoch-display">Epoch 0 / 20</div>
+      </div>
+
+      <div class="nn-viz">
+        <canvas class="canvas-nn" id="canvas-nn"></canvas>
+      </div>
+
+      <div class="metrics-area">
+        <div class="metric-card">
+          <div class="metric-label">Loss</div>
+          <div class="metric-value loss" id="loss-value">0.000</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Accuracy</div>
+          <div class="metric-value accuracy" id="accuracy-value">0.0%</div>
+        </div>
+      </div>
+
+      <div class="progress-container">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="progress-text" id="progress-text">准备中...</div>
+      </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="screen-result" class="screen">
+      <div class="result-icon" id="result-icon">🏆</div>
+      <h2 class="result-title" id="result-title">训练完成</h2>
+      <div class="result-score" id="result-score">0</div>
+      <div class="result-grade" id="result-grade">评级: S</div>
+
+      <div class="result-stats">
+        <div class="stat-row">
+          <span class="stat-label">最终 Loss</span>
+          <span class="stat-value" id="final-loss">-</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">最终 Accuracy</span>
+          <span class="stat-value" id="final-accuracy">-</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">训练轮数</span>
+          <span class="stat-value" id="final-epochs">-</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">参数配置</span>
+          <span class="stat-value" id="final-config">-</span>
+        </div>
+      </div>
+
+      <div class="result-actions">
+        <button class="btn btn-secondary" id="btn-back">返回主页</button>
+        <button class="btn" id="btn-retry">再来一次</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // State
+      const state = {
+        currentScreen: 'start',
+        config: {
+          learningRate: 0.01,
+          batchSize: 64,
+          epochs: 20
+        },
+        training: {
+          epoch: 0,
+          loss: 0,
+          accuracy: 0,
+          max_epochs: 20
+        },
+        result: {
+          score: 0,
+          finalLoss: 0,
+          finalAccuracy: 0,
+          grade: 'C'
+        },
+        highScore: 0
+      };
+
+      // Storage key
+      const STORAGE_KEY = 'mlcamp_highscore';
+
+      // DOM Elements
+      const screens = {
+        start: document.getElementById('screen-start'),
+        config: document.getElementById('screen-config'),
+        training: document.getElementById('screen-training'),
+        result: document.getElementById('screen-result')
+      };
+
+      // Load high score
+      function loadHighScore() {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            state.highScore = parseInt(saved, 10) || 0;
+          }
+        } catch (e) {}
+      }
+
+      // Save high score
+      function saveHighScore(score) {
+        try {
+          if (score > state.highScore) {
+            state.highScore = score;
+            localStorage.setItem(STORAGE_KEY, score.toString());
+          }
+        } catch (e) {}
+      }
+
+      // Show screen
+      function showScreen(name) {
+        Object.keys(screens).forEach(key => {
+          screens[key].classList.remove('active');
+        });
+        if (screens[name]) {
+          screens[name].classList.add('active');
+          state.currentScreen = name;
+        }
+      }
+
+      // Update high score display
+      function updateHighScoreDisplay() {
+        const display = document.getElementById('high-score-display');
+        const value = document.getElementById('high-score-value');
+        if (state.highScore > 0) {
+          display.style.display = 'block';
+          value.textContent = state.highScore;
+        } else {
+          display.style.display = 'none';
+        }
+      }
+
+      // Config option selection
+      function setupConfigOptions() {
+        const sections = [
+          { id: 'options-lr', key: 'learningRate' },
+          { id: 'options-batch', key: 'batchSize' },
+          { id: 'options-epoch', key: 'epochs' }
+        ];
+
+        sections.forEach(section => {
+          const container = document.getElementById(section.id);
+          const options = container.querySelectorAll('.config-option');
+
+          options.forEach(opt => {
+            opt.addEventListener('click', function() {
+              options.forEach(o => o.classList.remove('selected'));
+              this.classList.add('selected');
+              const value = parseFloat(this.dataset.value);
+              state.config[section.key] = value;
+            });
+          });
+        });
+      }
+
+      // Neural Network Visualization
+      let nnCanvas, nnCtx;
+      let nnAnimationId = null;
+      let nnNodes = [];
+      let nnConnections = [];
+
+      function initNNCanvas() {
+        nnCanvas = document.getElementById('canvas-nn');
+        nnCtx = nnCanvas.getContext('2d');
+
+        const rect = nnCanvas.getBoundingClientRect();
+        nnCanvas.width = rect.width * window.devicePixelRatio;
+        nnCanvas.height = rect.height * window.devicePixelRatio;
+        nnCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+        createNNNodes();
+        drawNN();
+      }
+
+      function createNNNodes() {
+        nnNodes = [];
+        const layers = [4, 6, 6, 4, 2]; // Input, hidden1, hidden2, hidden3, output
+        const canvasWidth = nnCanvas.width / window.devicePixelRatio;
+        const canvasHeight = nnCanvas.height / window.devicePixelRatio;
+        const layerSpacing = canvasWidth / (layers.length + 1);
+
+        layers.forEach((nodeCount, layerIdx) => {
+          const x = layerSpacing * (layerIdx + 1);
+          const nodeSpacing = canvasHeight / (nodeCount + 1);
+
+          for (let i = 0; i < nodeCount; i++) {
+            nnNodes.push({
+              x: x,
+              y: nodeSpacing * (i + 1),
+              layer: layerIdx,
+              activation: Math.random(),
+              targetActivation: 0
+            });
+          }
+        });
+
+        // Create connections
+        nnConnections = [];
+        for (let i = 0; i < nnNodes.length; i++) {
+          const node = nnNodes[i];
+          if (node.layer < layers.length - 1) {
+            const nextLayerStart = nnNodes.reduce((sum, n, idx) => {
+              if (n.layer === node.layer + 1) return idx;
+              return sum;
+            }, 0);
+
+            for (let j = nextLayerStart; j < nnNodes.length && nnNodes[j].layer === node.layer + 1; j++) {
+              nnConnections.push({
+                from: i,
+                to: j,
+                weight: (Math.random() - 0.5) * 2
+              });
+            }
+          }
+        }
+      }
+
+      function drawNN() {
+        const canvasWidth = nnCanvas.width / window.devicePixelRatio;
+        const canvasHeight = nnCanvas.height / window.devicePixelRatio;
+
+        nnCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+        // Draw connections
+        nnConnections.forEach(conn => {
+          const from = nnNodes[conn.from];
+          const to = nnNodes[conn.to];
+          const alpha = Math.min(0.3, Math.abs(conn.weight) * 0.3);
+          const color = conn.weight > 0 ? `rgba(16, 185, 129, ${alpha})` : `rgba(239, 68, 68, ${alpha})`;
+
+          nnCtx.beginPath();
+          nnCtx.moveTo(from.x, from.y);
+          nnCtx.lineTo(to.x, to.y);
+          nnCtx.strokeStyle = color;
+          nnCtx.lineWidth = Math.abs(conn.weight) * 1.5;
+          nnCtx.stroke();
+        });
+
+        // Draw nodes
+        nnNodes.forEach(node => {
+          const gradient = nnCtx.createRadialGradient(node.x, node.y, 0, node.x, node.y, 8);
+          const brightness = Math.floor(node.activation * 255);
+          gradient.addColorStop(0, `rgba(99, 102, 241, ${0.5 + node.activation * 0.5})`);
+          gradient.addColorStop(1, `rgba(99, 102, 241, 0.2)`);
+
+          nnCtx.beginPath();
+          nnCtx.arc(node.x, node.y, 6, 0, Math.PI * 2);
+          nnCtx.fillStyle = gradient;
+          nnCtx.fill();
+          nnCtx.strokeStyle = `rgba(99, 102, 241, ${0.5 + node.activation * 0.5})`;
+          nnCtx.lineWidth = 1.5;
+          nnCtx.stroke();
+        });
+      }
+
+      function updateNNVisualization(progress) {
+        // Animate nodes based on training progress
+        nnNodes.forEach((node, i) => {
+          node.targetActivation = Math.sin((i + progress * 10) * 0.5) * 0.5 + 0.5;
+          node.activation += (node.targetActivation - node.activation) * 0.1;
+
+          // Update some connection weights based on progress
+          if (i < nnConnections.length) {
+            nnConnections[i].weight = (Math.random() - 0.5) * 2 * progress;
+          }
+        });
+
+        drawNN();
+      }
+
+      function stopNNAnimation() {
+        if (nnAnimationId) {
+          cancelAnimationFrame(nnAnimationId);
+          nnAnimationId = null;
+        }
+      }
+
+      // Training simulation
+      let trainingInterval = null;
+
+      function simulateTraining() {
+        const { learningRate, batchSize, epochs } = state.config;
+        state.training.max_epochs = epochs;
+
+        // Calculate training dynamics based on parameters
+        const lrFactor = learningRate / 0.01;
+        const batchFactor = 1 + (batchSize - 64) / 128;
+        const epochFactor = epochs / 20;
+
+        // Initial metrics
+        state.training.loss = 2.5 + Math.random() * 0.5;
+        state.training.accuracy = 10 + Math.random() * 10;
+
+        // Training speed (higher LR = faster initial but may be unstable)
+        const baseSpeed = 0.15 / lrFactor;
+        const maxLoss = 2.8;
+        const minLoss = 0.05 + Math.random() * 0.1;
+
+        // Determine if training will be successful (mostly based on lr and epochs)
+        const willOverfit = learningRate >= 0.1;
+        const willSucceed = epochs >= 10 && learningRate <= 0.1;
+
+        let epoch = 0;
+        const totalEpochs = epochs;
+
+        updateTrainingUI(epoch, totalEpochs);
+
+        trainingInterval = setInterval(() => {
+          epoch++;
+          state.training.epoch = epoch;
+
+          // Simulate loss decrease with some randomness
+          const lossDecay = (state.training.loss - minLoss) * baseSpeed * (0.8 + Math.random() * 0.4);
+          if (willOverfit && epoch > totalEpochs * 0.7) {
+            // Start overfitting - loss goes back up slightly
+            state.training.loss = Math.min(maxLoss, state.training.loss + lossDecay * 0.3);
+          } else {
+            state.training.loss = Math.max(minLoss, state.training.loss - lossDecay);
+          }
+
+          // Simulate accuracy increase
+          const targetAccuracy = willSucceed ? (85 + Math.random() * 12) : (60 + Math.random() * 20);
+          const accGain = (targetAccuracy - state.training.accuracy) * (0.1 + Math.random() * 0.15);
+          state.training.accuracy = Math.min(targetAccuracy, state.training.accuracy + Math.max(0, accGain));
+
+          // Update UI
+          updateTrainingUI(epoch, totalEpochs);
+          updateNNVisualization(epoch / totalEpochs);
+
+          // Check completion
+          if (epoch >= totalEpochs) {
+            clearInterval(trainingInterval);
+            trainingInterval = null;
+
+            setTimeout(() => {
+              finishTraining();
+            }, 500);
+          }
+        }, 200);
+      }
+
+      function updateTrainingUI(epoch, totalEpochs) {
+        document.getElementById('epoch-display').textContent = `Epoch ${epoch} / ${totalEpochs}`;
+        document.getElementById('loss-value').textContent = state.training.loss.toFixed(3);
+        document.getElementById('accuracy-value').textContent = state.training.accuracy.toFixed(1) + '%';
+
+        const progress = (epoch / totalEpochs) * 100;
+        document.getElementById('progress-fill').style.width = progress + '%';
+        document.getElementById('progress-text').textContent = `训练进度: ${Math.round(progress)}%`;
+      }
+
+      function stopTraining() {
+        if (trainingInterval) {
+          clearInterval(trainingInterval);
+          trainingInterval = null;
+        }
+        stopNNAnimation();
+      }
+
+      function finishTraining() {
+        // Calculate final score
+        const { learningRate, batchSize, epochs } = state.config;
+        let score = Math.round(state.training.accuracy * 10);
+
+        // Bonus for good hyperparameters
+        if (learningRate >= 0.005 && learningRate <= 0.02) score += 50;
+        if (epochs >= 20) score += 30;
+        if (batchSize === 64) score += 20;
+
+        // Determine grade
+        let grade = 'C';
+        if (score >= 950) grade = 'S';
+        else if (score >= 850) grade = 'A';
+        else if (score >= 700) grade = 'B';
+
+        state.result.score = score;
+        state.result.finalLoss = state.training.loss;
+        state.result.finalAccuracy = state.training.accuracy;
+        state.result.grade = grade;
+
+        // Save high score
+        saveHighScore(score);
+
+        // Update result screen
+        document.getElementById('result-score').textContent = score;
+        document.getElementById('result-grade').textContent = '评级: ' + grade;
+        document.getElementById('final-loss').textContent = state.result.finalLoss.toFixed(3);
+        document.getElementById('final-accuracy').textContent = state.result.finalAccuracy.toFixed(1) + '%';
+        document.getElementById('final-epochs').textContent = epochs;
+        document.getElementById('final-config').textContent = `LR:${learningRate} BS:${batchSize}`;
+
+        // Set icon and title based on grade
+        const iconEl = document.getElementById('result-icon');
+        const titleEl = document.getElementById('result-title');
+        if (grade === 'S') {
+          iconEl.textContent = '🏆';
+          titleEl.textContent = '完美训练';
+        } else if (grade === 'A') {
+          iconEl.textContent = '🌟';
+          titleEl.textContent = '出色完成';
+        } else if (grade === 'B') {
+          iconEl.textContent = '👍';
+          titleEl.textContent = '训练完成';
+        } else {
+          iconEl.textContent = '💪';
+          titleEl.textContent = '继续努力';
+        }
+
+        showScreen('result');
+        stopNNAnimation();
+      }
+
+      // Event handlers
+      function setupEventListeners() {
+        // Start button
+        document.getElementById('btn-start').addEventListener('click', function() {
+          showScreen('config');
+        });
+
+        // Train button
+        document.getElementById('btn-train').addEventListener('click', function() {
+          showScreen('training');
+          setTimeout(() => {
+            initNNCanvas();
+            simulateTraining();
+          }, 100);
+        });
+
+        // Back button
+        document.getElementById('btn-back').addEventListener('click', function() {
+          stopTraining();
+          showScreen('start');
+          updateHighScoreDisplay();
+        });
+
+        // Retry button
+        document.getElementById('btn-retry').addEventListener('click', function() {
+          stopTraining();
+          showScreen('config');
+        });
+      }
+
+      // Initialize
+      function init() {
+        loadHighScore();
+        updateHighScoreDisplay();
+        setupConfigOptions();
+        setupEventListeners();
+        showScreen('start');
+      }
+
+      // Error fallback
+      window.addEventListener('load', function() {
+        try {
+          init();
+        } catch (error) {
+          console.error(error);
+          var fallback = document.createElement('div');
+          fallback.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0f172a;color:#f8fafc;font-size:18px;padding:24px;text-align:center;z-index:9999;';
+          fallback.textContent = '哎呀，出错了，请重启试试吧~';
+          document.body.innerHTML = '';
+          document.body.appendChild(fallback);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
